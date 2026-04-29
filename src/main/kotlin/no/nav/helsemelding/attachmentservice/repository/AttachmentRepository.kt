@@ -3,6 +3,9 @@ package no.nav.helsemelding.attachmentservice.repository
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 interface AttachmentRepository {
     fun save(
@@ -29,6 +32,8 @@ class GcsAttachmentRepository(
         contentType: String,
         content: ByteArray
     ): String {
+        log.info { "Saving attachment $fileName for message $messageId" }
+
         val objectName = objectName(messageId, fileName)
 
         val blobInfo = BlobInfo.newBuilder(
@@ -39,6 +44,7 @@ class GcsAttachmentRepository(
 
         storage.create(blobInfo, content)
 
+        log.info { "Attachment saved $objectName" }
         return objectName
     }
 
@@ -46,10 +52,13 @@ class GcsAttachmentRepository(
         messageId: String,
         fileName: String
     ): ByteArray? {
+        log.info { "Reading attachment $fileName for message $messageId" }
+
         val objectName = objectName(messageId, fileName)
 
         val blob = storage.get(bucketName, objectName)
 
+        log.info { "Attachment is read ${blob?.name}" }
         return blob?.getContent()
     }
 
