@@ -23,6 +23,7 @@ dependencyResolutionManagement {
             version("prometheus", "1.12.4")
             version("logback", "1.4.11")
             version("logstash", "7.4")
+            version("google-cloud-storage", "2.48.2")
 
             library("arrow-core", "io.arrow-kt", "arrow-core").versionRef("arrow")
             library("arrow-functions", "io.arrow-kt", "arrow-functions").versionRef("arrow")
@@ -57,6 +58,8 @@ dependencyResolutionManagement {
 
             library("ktor-server-auth-jvm", "io.ktor", "ktor-server-auth-jvm").versionRef("ktor")
             library("token-validation-ktor-v3", "no.nav.security", "token-validation-ktor-v3").versionRef("token-validation-ktor")
+
+            library("google-cloud-storage", "com.google.cloud", "google-cloud-storage").versionRef("google-cloud-storage")
 
             bundle("prometheus", listOf("ktor-server-metrics-micrometer", "micrometer-registry-prometheus"))
             bundle("logging", listOf("logback-classic", "logback-logstash"))

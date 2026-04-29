@@ -57,11 +57,8 @@ spec:
   gcp:
     buckets:
       - name: helsemelding-message-attachments
-        retentionPeriodDays: 30
+        retentionPeriodDays: 1
         lifecycleCondition:
           age: 30
-          createdBefore: 2026-01-01
-          daysSinceCustomTime: 1
-          numNewerVersions: 1
           withState: ANY
   env:
