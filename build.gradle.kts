@@ -50,8 +50,6 @@ dependencies {
     implementation(libs.bundles.prometheus)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
-    implementation(libs.jwt)
-    implementation(libs.nimbus.jwt)
     implementation(libs.ktor.client.auth)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
@@ -71,10 +69,7 @@ dependencies {
     testImplementation(testLibs.kotest.extensions.jvm)
     testImplementation(testLibs.kotest.extensions.testcontainers)
     testImplementation(testLibs.ktor.server.test.host)
-    testImplementation(testLibs.ktor.client.mock)
-    testImplementation(testLibs.testcontainers)
-    testImplementation(testLibs.testcontainers.postgresql)
-    testImplementation(testLibs.turbine)
+    testImplementation(testLibs.mockk)
     testImplementation(kotlin("test"))
 }
 
