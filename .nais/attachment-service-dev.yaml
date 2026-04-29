@@ -54,4 +54,14 @@ spec:
       memory: "512Mi"
   ingresses:
     - "https://attachment-service.intern.dev.nav.no"
+  gcp:
+    buckets:
+      - name: helsemelding-message-attachments
+        retentionPeriodDays: 30
+        lifecycleCondition:
+          age: 30
+          createdBefore: 2026-01-01
+          daysSinceCustomTime: 1
+          numNewerVersions: 1
+          withState: ANY
   env:
