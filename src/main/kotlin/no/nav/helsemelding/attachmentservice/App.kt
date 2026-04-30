@@ -12,7 +12,6 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.awaitCancellation
 import no.nav.helsemelding.attachmentservice.plugin.configureMetrics
 import no.nav.helsemelding.attachmentservice.plugin.configureRoutes
-import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
 
 private val log = KotlinLogging.logger {}
 
@@ -25,7 +24,7 @@ fun main() = SuspendApp {
                 Netty,
                 port = config().server.port.value,
                 preWait = config().server.preWait,
-                module = attachmentServiceModule(deps.meterRegistry, deps.attachmentRepository)
+                module = attachmentServiceModule(deps.meterRegistry)
             )
 
             awaitCancellation()
@@ -35,12 +34,11 @@ fun main() = SuspendApp {
 }
 
 internal fun attachmentServiceModule(
-    meterRegistry: PrometheusMeterRegistry,
-    attachmentRepository: AttachmentRepository
+    meterRegistry: PrometheusMeterRegistry
 ): Application.() -> Unit {
     return {
         configureMetrics(meterRegistry)
-        configureRoutes(meterRegistry, attachmentRepository)
+        configureRoutes(meterRegistry)
     }
 }
 
