@@ -16,6 +16,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
     val testAttachment = Attachment(
         messageId = "message-1",
+        attachmentId = "attachment-1",
         fileName = "attachment.txt",
         contentType = "text/plain",
         content = "Arbitrary text her".toByteArray()
@@ -36,27 +37,23 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.save(testAttachment)
 
-        result shouldBe "message-1/attachment.txt"
+        result shouldBe "message-1/attachment-1"
     }
 
     "read should read a file from GCS bucket" {
         val blob = mockk<Blob>()
 
         every {
-            storage.get(bucketName, "message-1/attachment.txt")
+            storage.get(bucketName, "message-1/attachment-1")
         } returns blob
 
-        every {
-            blob.getContent()
-        } returns testAttachment.content
-
-        every {
-            blob.contentType
-        } returns testAttachment.contentType
+        every { blob.getContent() } returns testAttachment.content
+        every { blob.contentType } returns testAttachment.contentType
+        every { blob.metadata } returns mapOf("fileName" to testAttachment.fileName)
 
         val result = repository.read(
             messageId = "message-1",
-            fileName = "attachment.txt"
+            attachmentId = "attachment-1",
         )
 
         result shouldBe testAttachment
@@ -64,12 +61,12 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
     "read should return null when file does not exist" {
         every {
-            storage.get(bucketName, "message-1/missing.txt")
+            storage.get(bucketName, "message-1/attachment-missing")
         } returns null
 
         val result = repository.read(
             messageId = "message-1",
-            fileName = "missing.txt"
+            attachmentId = "attachment-missing",
         )
 
         result.shouldBeNull()

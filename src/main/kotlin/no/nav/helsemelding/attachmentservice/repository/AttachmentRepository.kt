@@ -29,12 +29,17 @@ class GcsAttachmentRepository(
     ): String {
         log.info { "Saving attachment ${attachment.fileName} for message ${attachment.messageId}" }
 
-        val objectName = objectName(attachment.messageId, attachment.fileName)
+        val objectName = objectName(attachment.messageId, attachment.attachmentId)
 
         val blobInfo = BlobInfo.newBuilder(
             BlobId.of(bucketName, objectName)
         )
             .setContentType(attachment.contentType)
+            .setMetadata(
+                mapOf(
+                    "fileName" to attachment.fileName
+                )
+            )
             .build()
 
         storage.create(blobInfo, attachment.content)
@@ -45,11 +50,11 @@ class GcsAttachmentRepository(
 
     override fun read(
         messageId: String,
-        fileName: String
+        attachmentId: String
     ): Attachment? {
-        log.info { "Reading attachment $fileName for message $messageId" }
+        log.info { "Reading attachment $attachmentId for message $messageId" }
 
-        val objectName = objectName(messageId, fileName)
+        val objectName = objectName(messageId, attachmentId)
 
         val blob = storage.get(bucketName, objectName)
 
@@ -61,7 +66,8 @@ class GcsAttachmentRepository(
         log.info { "Attachment is read ${blob.name}" }
         return Attachment(
             messageId = messageId,
-            fileName = fileName,
+            attachmentId = attachmentId,
+            fileName = blob.metadata?.get("fileName")!!,
             contentType = blob.contentType,
             content = blob.getContent()
         )
@@ -69,6 +75,6 @@ class GcsAttachmentRepository(
 
     private fun objectName(
         messageId: String,
-        fileName: String
-    ): String = "$messageId/$fileName"
+        attachmentId: String
+    ): String = "$messageId/$attachmentId"
 }
