@@ -17,6 +17,8 @@ interface AttachmentRepository {
         messageId: String,
         fileName: String
     ): Attachment?
+
+    fun readAllByMessageId(messageId: String): List<Attachment>
 }
 
 class GcsAttachmentRepository(
@@ -71,6 +73,26 @@ class GcsAttachmentRepository(
             contentType = blob.contentType,
             content = blob.getContent()
         )
+    }
+
+    override fun readAllByMessageId(messageId: String): List<Attachment> {
+        log.info { "Reading all attachments for message $messageId" }
+
+        val prefix = "$messageId/"
+
+        return storage.list(
+            bucketName,
+            Storage.BlobListOption.prefix(prefix)
+        )
+            .iterateAll()
+            .mapNotNull { blob ->
+                val attachmentId = blob.name.removePrefix(prefix)
+
+                read(
+                    messageId = messageId,
+                    attachmentId = attachmentId
+                )
+            }
     }
 
     private fun objectName(
