@@ -53,7 +53,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.read(
             messageId = "message-1",
-            attachmentId = "attachment-1",
+            attachmentId = "attachment-1"
         )
 
         result shouldBe testAttachment
@@ -66,7 +66,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.read(
             messageId = "message-1",
-            attachmentId = "attachment-missing",
+            attachmentId = "attachment-missing"
         )
 
         result.shouldBeNull()
