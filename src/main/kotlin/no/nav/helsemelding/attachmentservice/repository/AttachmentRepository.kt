@@ -4,21 +4,21 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentservice.model.Attachment
 
 private val log = KotlinLogging.logger {}
 
 interface AttachmentRepository {
     fun save(
-        attachment: Attachment
+        messageId: String,
+        attachments: List<Attachment>
     ): String
 
     fun read(
-        messageId: String,
-        fileName: String
-    ): Attachment?
-
-    fun readAllByMessageId(messageId: String): List<Attachment>
+        messageId: String
+    ): List<Attachment>
 }
 
 class GcsAttachmentRepository(
@@ -27,76 +27,36 @@ class GcsAttachmentRepository(
 ) : AttachmentRepository {
 
     override fun save(
-        attachment: Attachment
+        messageId: String,
+        attachments: List<Attachment>
     ): String {
-        log.info { "Saving attachment ${attachment.fileName} for message ${attachment.messageId}" }
+        log.info { "Saving attachment for message $messageId" }
 
-        val objectName = objectName(attachment.messageId, attachment.attachmentId)
+        val content = Json.encodeToString(attachments).toByteArray()
 
         val blobInfo = BlobInfo.newBuilder(
-            BlobId.of(bucketName, objectName)
-        )
-            .setContentType(attachment.contentType)
-            .setMetadata(
-                mapOf(
-                    "fileName" to attachment.fileName
-                )
-            )
-            .build()
+            BlobId.of(bucketName, messageId)
+        ).build()
 
-        storage.create(blobInfo, attachment.content)
+        storage.create(blobInfo, content)
 
-        log.info { "Attachment saved $objectName" }
-        return objectName
+        log.info { "Attachment saved for message $messageId" }
+        return messageId
     }
 
     override fun read(
-        messageId: String,
-        attachmentId: String
-    ): Attachment? {
-        log.info { "Reading attachment $attachmentId for message $messageId" }
+        messageId: String
+    ): List<Attachment> {
+        log.info { "Reading attachments for message $messageId" }
 
-        val objectName = objectName(messageId, attachmentId)
-
-        val blob = storage.get(bucketName, objectName)
+        val blob = storage.get(bucketName, messageId)
 
         if (blob == null) {
-            log.warn { "Attachment not found $objectName" }
-            return null
+            log.warn { "Attachments not found $messageId" }
+            return emptyList()
         }
 
         log.info { "Attachment is read ${blob.name}" }
-        return Attachment(
-            messageId = messageId,
-            attachmentId = attachmentId,
-            fileName = blob.metadata?.get("fileName")!!,
-            contentType = blob.contentType,
-            content = blob.getContent()
-        )
+        return Json.decodeFromString<List<Attachment>>(String(blob.getContent()))
     }
-
-    override fun readAllByMessageId(messageId: String): List<Attachment> {
-        log.info { "Reading all attachments for message $messageId" }
-
-        val prefix = "$messageId/"
-
-        return storage.list(
-            bucketName,
-            Storage.BlobListOption.prefix(prefix)
-        )
-            .iterateAll()
-            .mapNotNull { blob ->
-                val attachmentId = blob.name.removePrefix(prefix)
-
-                read(
-                    messageId = messageId,
-                    attachmentId = attachmentId
-                )
-            }
-    }
-
-    private fun objectName(
-        messageId: String,
-        attachmentId: String
-    ): String = "$messageId/$attachmentId"
 }
