@@ -8,11 +8,18 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.helsemelding.attachmentservice.model.Attachment
 
 class GcsAttachmentRepositorySpec : StringSpec({
 
     val bucketName = "test-bucket"
-    val content = "Arbitrary text her".toByteArray()
+
+    val testAttachment = Attachment(
+        messageId = "message-1",
+        fileName = "attachment.txt",
+        contentType = "text/plain",
+        content = "Arbitrary text her".toByteArray()
+    )
 
     val storage = mockk<Storage>()
     val repository = GcsAttachmentRepository(
@@ -24,15 +31,10 @@ class GcsAttachmentRepositorySpec : StringSpec({
         val blob = mockk<Blob>()
 
         every {
-            storage.create(any<BlobInfo>(), content)
+            storage.create(any<BlobInfo>(), testAttachment.content)
         } returns blob
 
-        val result = repository.save(
-            messageId = "message-1",
-            fileName = "attachment.txt",
-            contentType = "text/plain",
-            content = content
-        )
+        val result = repository.save(testAttachment)
 
         result shouldBe "message-1/attachment.txt"
     }
@@ -46,14 +48,18 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         every {
             blob.getContent()
-        } returns content
+        } returns testAttachment.content
+
+        every {
+            blob.contentType
+        } returns testAttachment.contentType
 
         val result = repository.read(
             messageId = "message-1",
             fileName = "attachment.txt"
         )
 
-        result shouldBe content
+        result shouldBe testAttachment
     }
 
     "read should return null when file does not exist" {
