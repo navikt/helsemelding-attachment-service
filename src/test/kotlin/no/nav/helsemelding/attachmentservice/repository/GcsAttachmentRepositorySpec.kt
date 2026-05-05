@@ -7,6 +7,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.uuid.Uuid
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentservice.model.Attachment
@@ -14,7 +15,7 @@ import no.nav.helsemelding.attachmentservice.model.Attachment
 class GcsAttachmentRepositorySpec : StringSpec({
 
     val bucketName = "test-bucket"
-    val messageId = "message-1"
+    val messageId = Uuid.random()
 
     val testAttachments = listOf(
         Attachment(
@@ -46,14 +47,14 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.save(messageId, testAttachments)
 
-        result shouldBe messageId
+        result shouldBe messageId.toString()
     }
 
     "read should read attachments from GCS bucket" {
         val blob = mockk<Blob>()
 
         every {
-            storage.get(bucketName, messageId)
+            storage.get(bucketName, messageId.toString())
         } returns blob
 
         every { blob.getContent() } returns Json.encodeToString(testAttachments).toByteArray()
@@ -64,11 +65,13 @@ class GcsAttachmentRepositorySpec : StringSpec({
     }
 
     "read should return empty list when attachment is not found" {
+        val missingMessageId = Uuid.random()
+
         every {
-            storage.get(bucketName, "message-missing")
+            storage.get(bucketName, missingMessageId.toString())
         } returns null
 
-        val result = repository.read("message-missing")
+        val result = repository.read(missingMessageId)
 
         result shouldBe emptyList()
     }

@@ -7,17 +7,19 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentservice.model.Attachment
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}
 
 interface AttachmentRepository {
     fun save(
-        messageId: String,
+        messageId: Uuid,
         attachments: List<Attachment>
     ): String
 
     fun read(
-        messageId: String
+        messageId: Uuid
     ): List<Attachment>
 }
 
@@ -27,7 +29,7 @@ class GcsAttachmentRepository(
 ) : AttachmentRepository {
 
     override fun save(
-        messageId: String,
+        messageId: Uuid,
         attachments: List<Attachment>
     ): String {
         log.info { "Saving attachment for message $messageId" }
@@ -35,21 +37,21 @@ class GcsAttachmentRepository(
         val content = Json.encodeToString(attachments).toByteArray()
 
         val blobInfo = BlobInfo.newBuilder(
-            BlobId.of(bucketName, messageId)
+            BlobId.of(bucketName, messageId.toString())
         ).build()
 
         storage.create(blobInfo, content)
 
         log.info { "Attachment saved for message $messageId" }
-        return messageId
+        return blobInfo.name
     }
 
     override fun read(
-        messageId: String
+        messageId: Uuid
     ): List<Attachment> {
         log.info { "Reading attachments for message $messageId" }
 
-        val blob = storage.get(bucketName, messageId)
+        val blob = storage.get(bucketName, messageId.toString())
 
         if (blob == null) {
             log.warn { "Attachments not found $messageId" }

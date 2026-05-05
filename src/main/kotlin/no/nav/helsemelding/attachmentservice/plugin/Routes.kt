@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentservice.model.Attachment
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
+import kotlin.uuid.Uuid
 
 fun Application.configureRoutes(
     registry: PrometheusMeterRegistry,
@@ -39,7 +40,7 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry, attachmentRepository
     route("/attachments") {
         post("/test") {
             try {
-                val messageId = "8ccc4474-47c7-11f1-83a5-325096b39f47"
+                val messageId = "8ccc4474-47c7-11f1-83a5-325096b39f48"
                 val testAttachments = listOf(
                     Attachment(
                         fileName = "attachment.txt",
@@ -53,7 +54,7 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry, attachmentRepository
                     )
                 )
 
-                attachmentRepository.save(messageId, testAttachments)
+                attachmentRepository.save(Uuid.parse(messageId), testAttachments)
             } catch (e: Exception) {
                 call.respondText("Error saving attachment: ${e.message}")
                 return@post
@@ -64,8 +65,8 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry, attachmentRepository
 
         get("/test") {
             try {
-                val messageId = "8ccc4474-47c7-11f1-83a5-325096b39f47"
-                val content = attachmentRepository.read(messageId)
+                val messageId = "8ccc4474-47c7-11f1-83a5-325096b39f48"
+                val content = attachmentRepository.read(Uuid.parse(messageId))
 
                 if (content.isEmpty()) {
                     call.respond(HttpStatusCode.NotFound)
