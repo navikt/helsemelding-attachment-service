@@ -5,6 +5,7 @@ import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.helsemelding.attachmentservice.model.Attachment
+import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}
 
@@ -14,11 +15,11 @@ interface AttachmentRepository {
     ): String
 
     fun read(
-        messageId: String,
+        messageId: Uuid,
         fileName: String
     ): Attachment?
 
-    fun readAllByMessageId(messageId: String): List<Attachment>
+    fun readAllByMessageId(messageId: Uuid): List<Attachment>
 }
 
 class GcsAttachmentRepository(
@@ -51,7 +52,7 @@ class GcsAttachmentRepository(
     }
 
     override fun read(
-        messageId: String,
+        messageId: Uuid,
         attachmentId: String
     ): Attachment? {
         log.info { "Reading attachment $attachmentId for message $messageId" }
@@ -75,7 +76,7 @@ class GcsAttachmentRepository(
         )
     }
 
-    override fun readAllByMessageId(messageId: String): List<Attachment> {
+    override fun readAllByMessageId(messageId: Uuid): List<Attachment> {
         log.info { "Reading all attachments for message $messageId" }
 
         val prefix = "$messageId/"
@@ -96,7 +97,7 @@ class GcsAttachmentRepository(
     }
 
     private fun objectName(
-        messageId: String,
+        messageId: Uuid,
         attachmentId: String
     ): String = "$messageId/$attachmentId"
 }

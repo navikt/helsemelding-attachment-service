@@ -10,13 +10,15 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.helsemelding.attachmentservice.model.Attachment
+import kotlin.uuid.Uuid
 
 class GcsAttachmentRepositorySpec : StringSpec({
 
     val bucketName = "test-bucket"
+    val messageId = Uuid.random()
 
     val testAttachment = Attachment(
-        messageId = "message-1",
+        messageId = messageId,
         attachmentId = "attachment-1",
         fileName = "attachment.txt",
         contentType = "text/plain",
@@ -38,14 +40,14 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.save(testAttachment)
 
-        result shouldBe "message-1/attachment-1"
+        result shouldBe "$messageId/attachment-1"
     }
 
     "read should read a file from GCS bucket" {
         val blob = mockk<Blob>()
 
         every {
-            storage.get(bucketName, "message-1/attachment-1")
+            storage.get(bucketName, "$messageId/attachment-1")
         } returns blob
 
         every { blob.getContent() } returns testAttachment.content
@@ -53,7 +55,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
         every { blob.metadata } returns mapOf("fileName" to testAttachment.fileName)
 
         val result = repository.read(
-            messageId = "message-1",
+            messageId = messageId,
             attachmentId = "attachment-1"
         )
 
@@ -62,11 +64,11 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
     "read should return null when file does not exist" {
         every {
-            storage.get(bucketName, "message-1/attachment-missing")
+            storage.get(bucketName, "$messageId/attachment-missing")
         } returns null
 
         val result = repository.read(
-            messageId = "message-1",
+            messageId = messageId,
             attachmentId = "attachment-missing"
         )
 
@@ -89,20 +91,20 @@ class GcsAttachmentRepositorySpec : StringSpec({
         every { storage.list(bucketName, any<Storage.BlobListOption>()) } returns page
         every { page.iterateAll() } returns listOf(blob1, blob2)
 
-        every { storage.get(bucketName, "message-1/attachment-1") } returns blob1
-        every { storage.get(bucketName, "message-1/attachment-2") } returns blob2
+        every { storage.get(bucketName, "$messageId/attachment-1") } returns blob1
+        every { storage.get(bucketName, "$messageId/attachment-2") } returns blob2
 
         every { blob1.getContent() } returns attachment1.content
         every { blob1.contentType } returns attachment1.contentType
         every { blob1.metadata } returns mapOf("fileName" to attachment1.fileName)
-        every { blob1.name } returns "message-1/attachment-1"
+        every { blob1.name } returns "$messageId/attachment-1"
 
         every { blob2.getContent() } returns attachment2.content
         every { blob2.contentType } returns attachment2.contentType
         every { blob2.metadata } returns mapOf("fileName" to attachment2.fileName)
-        every { blob2.name } returns "message-1/attachment-2"
+        every { blob2.name } returns "$messageId/attachment-2"
 
-        val result = repository.readAllByMessageId("message-1")
+        val result = repository.readAllByMessageId(messageId)
 
         result shouldBe listOf(attachment1, attachment2)
     }
@@ -113,7 +115,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
         every { storage.list(bucketName, any<Storage.BlobListOption>()) } returns page
         every { page.iterateAll() } returns emptyList()
 
-        val result = repository.readAllByMessageId("message-without-attachments")
+        val result = repository.readAllByMessageId(Uuid.random())
 
         result shouldBe emptyList()
     }
