@@ -23,6 +23,7 @@ dependencyResolutionManagement {
             version("prometheus", "1.12.4")
             version("logback", "1.4.11")
             version("logstash", "7.4")
+            version("google-cloud-storage", "2.48.2")
 
             library("arrow-core", "io.arrow-kt", "arrow-core").versionRef("arrow")
             library("arrow-functions", "io.arrow-kt", "arrow-functions").versionRef("arrow")
@@ -58,6 +59,8 @@ dependencyResolutionManagement {
             library("ktor-server-auth-jvm", "io.ktor", "ktor-server-auth-jvm").versionRef("ktor")
             library("token-validation-ktor-v3", "no.nav.security", "token-validation-ktor-v3").versionRef("token-validation-ktor")
 
+            library("google-cloud-storage", "com.google.cloud", "google-cloud-storage").versionRef("google-cloud-storage")
+
             bundle("prometheus", listOf("ktor-server-metrics-micrometer", "micrometer-registry-prometheus"))
             bundle("logging", listOf("logback-classic", "logback-logstash"))
         }
@@ -70,6 +73,7 @@ dependencyResolutionManagement {
             version("testcontainers", "1.18.1")
             version("kotest-extensions", "2.0.2")
             version("turbine", "1.2.0")
+            version("mockk", "1.13.16")
 
             library("ktor-server-test-host", "io.ktor", "ktor-server-test-host").versionRef("ktor-server-test")
             library("ktor-client-mock", "io.ktor", "ktor-client-mock").versionRef("ktor")
@@ -86,6 +90,8 @@ dependencyResolutionManagement {
             library("testcontainers-postgresql", "org.testcontainers", "postgresql").versionRef("testcontainers")
 
             library("turbine", "app.cash.turbine", "turbine").versionRef("turbine")
+
+            library("mockk", "io.mockk", "mockk").versionRef("mockk")
 
             bundle("kotest", listOf("kotest-runner-junit5", "kotest-framework-datatest"))
         }
