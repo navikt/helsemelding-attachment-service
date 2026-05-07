@@ -8,8 +8,8 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
-import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -99,7 +99,7 @@ class RoutesSpec : StringSpec({
         }
     }
 
-    "GET /attachments/{messageId} returns empty list when attachments not found" {
+    "GET /attachments/{messageId} returns Not Found when attachments not found" {
         withTestApplication {
             val messageId = Uuid.random()
             repository.save(messageId, emptyList())
