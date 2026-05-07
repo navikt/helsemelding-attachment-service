@@ -53,6 +53,9 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
 
             call.respond(HttpStatusCode.OK)
         } catch (e: Exception) {
+            // TODO: DEBUG LOGGING - Remove before merging
+            log.debug(e) { e }
+
             val errorMessage = "Error saving attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
             call.respond(HttpStatusCode.InternalServerError, errorMessage)
@@ -65,8 +68,15 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
         try {
             val attachments = attachmentRepository.read(messageId)
 
-            call.respond(HttpStatusCode.OK, attachments)
+            if (attachments.isEmpty()) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                call.respond(HttpStatusCode.OK, attachments)
+            }
         } catch (e: Exception) {
+            // TODO: DEBUG LOGGING - Remove before merging
+            log.debug(e) { e }
+
             val errorMessage = "Error reading attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
             call.respond(HttpStatusCode.InternalServerError, errorMessage)

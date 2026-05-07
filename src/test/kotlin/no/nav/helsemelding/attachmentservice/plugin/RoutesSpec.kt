@@ -9,6 +9,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.OK
+import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -105,10 +106,7 @@ class RoutesSpec : StringSpec({
 
             val response = client.get("/attachments/$messageId")
 
-            response.status shouldBe OK
-
-            val attachmentsRetrieved = Json.decodeFromString<List<Attachment>>(response.bodyAsText())
-            attachmentsRetrieved shouldBe emptyList()
+            response.status shouldBe NotFound
         }
     }
 
