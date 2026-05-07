@@ -1,5 +1,6 @@
 package no.nav.helsemelding.attachmentservice.plugin
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.request.receive
@@ -15,6 +16,8 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentservice.model.Attachment
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
 import kotlin.uuid.Uuid
+
+val log = KotlinLogging.logger {}
 
 fun Application.configureRoutes(
     registry: PrometheusMeterRegistry,
@@ -42,42 +45,60 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
 
 fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     post("/attachments/{messageId}") {
-        val messageId = call.massageId()
-        val attachments = call.attachments()
+        val messageId = call.massageId() ?: return@post
+        val attachments = call.attachments() ?: return@post
 
-        attachmentRepository.save(messageId, attachments)
+        try {
+            attachmentRepository.save(messageId, attachments)
 
-        call.respond(HttpStatusCode.OK)
+            call.respond(HttpStatusCode.OK)
+        } catch (e: Exception) {
+            val errorMessage = "Error saving attachments for message $messageId: ${e.message}"
+            log.error(e) { errorMessage }
+            call.respond(HttpStatusCode.InternalServerError, errorMessage)
+        }
     }
 
     get("/attachments/{messageId}") {
-        val messageId = call.massageId()
+        val messageId = call.massageId() ?: return@get
 
-        val attachments = attachmentRepository.read(messageId)
+        try {
+            val attachments = attachmentRepository.read(messageId)
 
-        call.respond(HttpStatusCode.OK, attachments)
+            call.respond(HttpStatusCode.OK, attachments)
+        } catch (e: Exception) {
+            val errorMessage = "Error reading attachments for message $messageId: ${e.message}"
+            log.error(e) { errorMessage }
+            call.respond(HttpStatusCode.InternalServerError, errorMessage)
+        }
     }
 }
 
-private suspend fun RoutingCall.massageId(): Uuid {
+private suspend fun RoutingCall.massageId(): Uuid? {
     val messageIdParam = this.parameters["messageId"]
 
     if (messageIdParam.isNullOrEmpty()) {
-        this.respond(HttpStatusCode.BadRequest, "Missing messageId")
-        throw IllegalArgumentException("Missing messageId")
+        val errorMessage = "Missing messageId"
+        log.warn { errorMessage }
+        this.respond(HttpStatusCode.BadRequest, errorMessage)
+        return null
     }
 
     return try {
         Uuid.parse(messageIdParam)
     } catch (e: IllegalArgumentException) {
-        this.respond(HttpStatusCode.BadRequest, "messageId must be a valid UUID")
-        throw e
+        val errorMessage = "messageId must be a valid UUID"
+        log.warn { errorMessage }
+        this.respond(HttpStatusCode.BadRequest, errorMessage)
+        null
     }
 }
 
-private suspend fun RoutingCall.attachments(): List<Attachment> = try {
+private suspend fun RoutingCall.attachments(): List<Attachment>? = try {
     this.receive<List<Attachment>>()
 } catch (e: Exception) {
-    this.respond(HttpStatusCode.BadRequest, "Invalid attachment format: ${e.message}")
-    throw e
+    val errorMessage = "Invalid attachment format: ${e.message}"
+    log.warn { errorMessage }
+    this.respond(HttpStatusCode.BadRequest, errorMessage)
+    null
 }

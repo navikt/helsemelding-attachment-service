@@ -61,3 +61,17 @@ class GcsAttachmentRepository(
         return Json.decodeFromString<List<Attachment>>(String(blob.getContent()))
     }
 }
+
+class FakeAttachmentRepository() : AttachmentRepository {
+
+    private val attachments = mutableMapOf<Uuid, List<Attachment>>()
+
+    override fun save(messageId: Uuid, attachments: List<Attachment>): String {
+        this.attachments[messageId] = attachments
+        return messageId.toString()
+    }
+
+    override fun read(messageId: Uuid): List<Attachment> {
+        return attachments[messageId].orEmpty()
+    }
+}
