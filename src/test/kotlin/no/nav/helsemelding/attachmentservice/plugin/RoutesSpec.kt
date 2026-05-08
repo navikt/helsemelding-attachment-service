@@ -17,17 +17,15 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import no.nav.helsemelding.attachmentservice.buildTestAttachments
 import no.nav.helsemelding.attachmentservice.model.Attachment
 import no.nav.helsemelding.attachmentservice.repository.FakeAttachmentRepository
 import kotlin.uuid.Uuid
 
 class RoutesSpec : StringSpec({
-    val testAttachments = listOf(
-        Attachment("attachment.txt", "text/plain", "Arbitrary text here".toByteArray()),
-        Attachment("attachment2.txt", "text/plain", "More arbitrary text here".toByteArray())
-    )
-
     lateinit var repository: FakeAttachmentRepository
+
+    val testAttachments = buildTestAttachments()
 
     beforeEach {
         repository = FakeAttachmentRepository()

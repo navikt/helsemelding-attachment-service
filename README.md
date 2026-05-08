@@ -5,7 +5,7 @@ The service stores files attached to messages and exposes an API to retrieve the
 ## API
 The service exposes REST endpoints for storing and retrieving attachments:
 
-#### Store attachments
+### Store attachments
 
 `POST /attachments/{messageId}`
 
@@ -17,19 +17,19 @@ Example:
 	{
 		"fileName":"attachment.txt",
 		"contentType":"text/plain",
-		"content":[65,114,98,105,116,114,97]
+		"contentBase64":[65,114,98,105,116,114,97]
 	},
 	{
 		"fileName":"attachment2.txt",
 		"contentType":"text/plain",
-		"content":[77,111,114,101,32,97,114,98,105,116]
+		"contentBase64":[77,111,114,101,32,97,114,98,105,116]
 	}
 ]
 ```
 
 Returns `200 OK` if the attachments were stored successfully.
 
-#### Retrieve attachments
+### Retrieve attachments
 
 `GET /attachments/{messageId}`
 
