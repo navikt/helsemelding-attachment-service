@@ -8,6 +8,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.contentType
@@ -83,6 +84,31 @@ class RoutesSpec : StringSpec({
         }
     }
 
+    "POST /attachments/{messageId} returns Not Found when messageId is missing" {
+        withTestApplication {
+            val response = client.post("/attachments/") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(testAttachments))
+            }
+
+            response.status shouldBe NotFound
+        }
+    }
+
+    "POST /attachments/{messageId} returns Internal Server Error when repository throws exception" {
+        withTestApplication {
+            val messageId = Uuid.random()
+            repository.givenSaveThrowsException(true)
+
+            val response = client.post("/attachments/$messageId") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(testAttachments))
+            }
+
+            response.status shouldBe InternalServerError
+        }
+    }
+
     "GET /attachments/{messageId} returns list of attachments" {
         withTestApplication {
             val messageId = Uuid.random()
@@ -113,6 +139,25 @@ class RoutesSpec : StringSpec({
             val response = client.get("/attachments/invalid-uuid")
 
             response.status shouldBe BadRequest
+        }
+    }
+
+    "GET /attachments/{messageId} returns Not Found when messageId is missing" {
+        withTestApplication {
+            val response = client.get("/attachments/")
+
+            response.status shouldBe NotFound
+        }
+    }
+
+    "GET /attachments/{messageId} returns Internal Server Error when repository throws exception" {
+        withTestApplication {
+            val messageId = Uuid.random()
+            repository.givenReadThrowsException(true)
+
+            val response = client.get("/attachments/$messageId")
+
+            response.status shouldBe InternalServerError
         }
     }
 })

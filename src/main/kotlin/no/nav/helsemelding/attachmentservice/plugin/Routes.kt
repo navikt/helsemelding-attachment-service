@@ -78,24 +78,14 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     }
 }
 
-private suspend fun RoutingCall.massageId(): Uuid? {
-    val messageIdParam = this.parameters["messageId"]
-
-    if (messageIdParam.isNullOrEmpty()) {
-        val errorMessage = "Missing messageId"
-        log.warn { errorMessage }
-        this.respond(HttpStatusCode.BadRequest, errorMessage)
-        return null
-    }
-
-    return try {
-        Uuid.parse(messageIdParam)
-    } catch (e: IllegalArgumentException) {
-        val errorMessage = "messageId must be a valid UUID"
-        log.warn { errorMessage }
-        this.respond(HttpStatusCode.BadRequest, errorMessage)
-        null
-    }
+private suspend fun RoutingCall.massageId(): Uuid? = try {
+    val messageIdParam = this.parameters["messageId"]!!
+    Uuid.parse(messageIdParam)
+} catch (e: IllegalArgumentException) {
+    val errorMessage = "messageId must be a valid UUID"
+    log.warn { errorMessage }
+    this.respond(HttpStatusCode.BadRequest, errorMessage)
+    null
 }
 
 private suspend fun RoutingCall.attachments(): List<Attachment>? = try {
