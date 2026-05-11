@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Attachment(
-    val fileName: String,
+    val description: String,
     val contentType: String,
     val contentBase64: String
 )

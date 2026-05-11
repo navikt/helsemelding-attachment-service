@@ -15,13 +15,13 @@ Example:
 ```
 [
 	{
-		"fileName":"attachment.txt",
+		"description":"attachment 1",
 		"contentType":"text/plain",
 		"contentBase64":"SGVsbG8="
 	},
 	{
-		"fileName":"attachment2.txt",
-		"contentType":"text/plain",
+		"description":"attachment 2",
+		"contentType":"application/pdf",
 		"contentBase64":"SlVsbDw71="
 	}
 ]

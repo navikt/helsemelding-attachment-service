@@ -10,12 +10,12 @@ fun buildTestAttachments(): List<Attachment> {
 
     return listOf(
         Attachment(
-            fileName = "attachment.txt",
+            description = "attachment 1",
             contentType = "text/plain",
             contentBase64 = "Arbitrary text here".toBase64()
         ),
         Attachment(
-            fileName = "content.pdf",
+            description = "PDF file",
             contentType = "application/pdf",
             contentBase64 = testFileBytes.toBase64()
         )
