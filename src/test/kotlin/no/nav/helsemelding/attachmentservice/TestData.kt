@@ -12,7 +12,7 @@ fun buildTestAttachments(): List<Attachment> {
         Attachment(
             fileName = "attachment.txt",
             contentType = "text/plain",
-            contentBase64 = "Arbitrary text here".toByteArray().toBase64()
+            contentBase64 = "Arbitrary text here".toBase64()
         ),
         Attachment(
             fileName = "content.pdf",
@@ -22,4 +22,6 @@ fun buildTestAttachments(): List<Attachment> {
     )
 }
 
-fun ByteArray.toBase64() = Base64.getEncoder().encodeToString(this).toByteArray()
+fun ByteArray.toBase64() = Base64.getEncoder().encodeToString(this)
+
+fun String.toBase64() = Base64.getEncoder().encodeToString(this.toByteArray())

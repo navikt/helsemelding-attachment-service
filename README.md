@@ -17,12 +17,12 @@ Example:
 	{
 		"fileName":"attachment.txt",
 		"contentType":"text/plain",
-		"contentBase64":[65,114,98,105,116,114,97]
+		"contentBase64":"SGVsbG8="
 	},
 	{
 		"fileName":"attachment2.txt",
 		"contentType":"text/plain",
-		"contentBase64":[77,111,114,101,32,97,114,98,105,116]
+		"contentBase64":"SlVsbDw71="
 	}
 ]
 ```
