@@ -18,8 +18,8 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.buildTestAttachments
-import no.nav.helsemelding.attachmentservice.model.Attachment
 import no.nav.helsemelding.attachmentservice.repository.FakeAttachmentRepository
 import kotlin.uuid.Uuid
 

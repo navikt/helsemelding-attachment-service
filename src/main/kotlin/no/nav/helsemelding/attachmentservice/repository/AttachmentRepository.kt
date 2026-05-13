@@ -6,7 +6,7 @@ import com.google.cloud.storage.Storage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import no.nav.helsemelding.attachmentservice.model.Attachment
+import no.nav.helsemelding.attachmentmodel.model.Attachment
 import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}

@@ -103,3 +103,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "helsemelding-attachment-service"
+
+include("attachment-model")

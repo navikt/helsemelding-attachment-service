@@ -13,7 +13,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import no.nav.helsemelding.attachmentservice.model.Attachment
+import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
 import kotlin.uuid.Uuid
 
