@@ -61,3 +61,35 @@ class GcsAttachmentRepository(
         return Json.decodeFromString<List<Attachment>>(String(blob.getContent()))
     }
 }
+
+class FakeAttachmentRepository() : AttachmentRepository {
+
+    private val attachments = mutableMapOf<Uuid, List<Attachment>>()
+    private var saveTrowsException = false
+    private var readTrowsException = false
+
+    fun givenSaveThrowsException(throwException: Boolean) {
+        saveTrowsException = throwException
+    }
+
+    fun givenReadThrowsException(throwException: Boolean) {
+        readTrowsException = throwException
+    }
+
+    override fun save(messageId: Uuid, attachments: List<Attachment>): String {
+        if (saveTrowsException) {
+            throw RuntimeException("Error saving attachments for message $messageId")
+        }
+
+        this.attachments[messageId] = attachments
+        return messageId.toString()
+    }
+
+    override fun read(messageId: Uuid): List<Attachment> {
+        if (readTrowsException) {
+            throw RuntimeException("Error reading attachments for message $messageId")
+        }
+
+        return attachments[messageId].orEmpty()
+    }
+}

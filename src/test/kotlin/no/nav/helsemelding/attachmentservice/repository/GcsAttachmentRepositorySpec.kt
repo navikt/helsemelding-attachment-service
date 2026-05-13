@@ -9,26 +9,14 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import no.nav.helsemelding.attachmentservice.model.Attachment
+import no.nav.helsemelding.attachmentservice.buildTestAttachments
 import kotlin.uuid.Uuid
 
 class GcsAttachmentRepositorySpec : StringSpec({
 
     val bucketName = "test-bucket"
     val messageId = Uuid.random()
-
-    val testAttachments = listOf(
-        Attachment(
-            fileName = "attachment.txt",
-            contentType = "text/plain",
-            content = "Arbitrary text here".toByteArray()
-        ),
-        Attachment(
-            fileName = "attachment2.txt",
-            contentType = "text/plain",
-            content = "More arbitrary text here".toByteArray()
-        )
-    )
+    val testAttachments = buildTestAttachments()
 
     val storage = mockk<Storage>()
     val repository = GcsAttachmentRepository(
