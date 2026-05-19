@@ -4,7 +4,7 @@ Kotlin client library for interacting with the Attachment Service.
 
 ## Purpose
 
-Simplify integration with `helsemelding-attechment-service` by hiding HTTP, serialization and error handling from consumers
+Simplify integration with `helsemelding-attachment-service` by hiding HTTP, serialization and error handling from consumers
 
 ## Usage
 
