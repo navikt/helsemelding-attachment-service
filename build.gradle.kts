@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     application
     kotlin("jvm") version "2.3.21"
-    kotlin("plugin.serialization") version "2.1.10"
+    kotlin("plugin.serialization") version "2.3.21"
     id("io.ktor.plugin") version "3.0.3"
     id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
     id("com.gradleup.shadow") version "9.2.2"
@@ -40,6 +40,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
 }
 
 dependencies {
+    implementation(project(":attachment-model"))
     implementation(libs.arrow.core)
     implementation(libs.arrow.functions)
     implementation(libs.arrow.fx.coroutines)

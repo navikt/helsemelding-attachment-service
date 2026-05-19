@@ -1,4 +1,4 @@
-package no.nav.helsemelding.attachmentservice.model
+package no.nav.helsemelding.attachmentmodel.model
 
 import kotlinx.serialization.Serializable
 

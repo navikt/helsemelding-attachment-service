@@ -1,6 +1,6 @@
 package no.nav.helsemelding.attachmentservice
 
-import no.nav.helsemelding.attachmentservice.model.Attachment
+import no.nav.helsemelding.attachmentmodel.model.Attachment
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Base64
