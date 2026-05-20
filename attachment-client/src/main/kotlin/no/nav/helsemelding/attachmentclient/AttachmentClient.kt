@@ -32,7 +32,7 @@ interface AttachmentClient {
 }
 
 class HttpAttachmentClient(
-    clientProvider: () -> HttpClient = httpClient(),
+    clientProvider: () -> HttpClient = scopedAuthHttpClient(),
     private val attachmentServiceUrl: String = config().attachmentService.url.toString()
 ) : AttachmentClient {
 
