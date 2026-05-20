@@ -74,6 +74,7 @@ dependencyResolutionManagement {
             version("kotest-extensions", "2.0.2")
             version("turbine", "1.2.0")
             version("mockk", "1.13.16")
+            version("mock-oauth2", "2.1.10")
 
             library("ktor-server-test-host", "io.ktor", "ktor-server-test-host").versionRef("ktor-server-test")
             library("ktor-client-mock", "io.ktor", "ktor-client-mock").versionRef("ktor")
@@ -92,6 +93,8 @@ dependencyResolutionManagement {
             library("turbine", "app.cash.turbine", "turbine").versionRef("turbine")
 
             library("mockk", "io.mockk", "mockk").versionRef("mockk")
+
+            library("mock-oauth2-server", "no.nav.security", "mock-oauth2-server").versionRef("mock-oauth2")
 
             bundle("kotest", listOf("kotest-runner-junit5", "kotest-framework-datatest"))
         }

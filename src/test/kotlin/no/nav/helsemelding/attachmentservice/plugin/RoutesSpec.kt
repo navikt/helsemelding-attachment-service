@@ -2,6 +2,7 @@ package no.nav.helsemelding.attachmentservice.plugin
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -11,6 +12,7 @@ import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
+import io.ktor.http.HttpStatusCode.Companion.Unauthorized
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -21,23 +23,41 @@ import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.buildTestAttachments
 import no.nav.helsemelding.attachmentservice.repository.FakeAttachmentRepository
+import no.nav.security.mock.oauth2.MockOAuth2Server
 import kotlin.uuid.Uuid
 
 class RoutesSpec : StringSpec({
     lateinit var repository: FakeAttachmentRepository
+    lateinit var mockOAuth2Server: MockOAuth2Server
 
     val testAttachments = buildTestAttachments()
+
+    beforeSpec {
+        mockOAuth2Server = MockOAuth2Server()
+        mockOAuth2Server.start(port = 3344)
+    }
+
+    afterSpec {
+        mockOAuth2Server.shutdown()
+    }
 
     beforeEach {
         repository = FakeAttachmentRepository()
     }
 
-    suspend fun withTestApplication(
+    fun getToken() = mockOAuth2Server.issueToken(
+        issuerId = "AZURE_AD",
+        audience = "api://dev-gcp.helsemelding.attachment-service",
+        subject = "test-user"
+    )
+
+    fun withTestApplication(
         testBlock: suspend ApplicationTestBuilder.() -> Unit
     ) {
         testApplication {
             application {
                 installContentNegotiation()
+                configureAuthentication()
                 configureRoutes(
                     registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
                     attachmentRepository = repository
@@ -52,6 +72,7 @@ class RoutesSpec : StringSpec({
             val messageId = Uuid.random()
 
             val response = client.post("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
                 contentType(ContentType.Application.Json)
                 setBody(Json.encodeToString(testAttachments))
             }
@@ -65,6 +86,7 @@ class RoutesSpec : StringSpec({
         withTestApplication {
             val messageId = Uuid.random()
             val response = client.post("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
                 contentType(ContentType.Application.Json)
                 setBody("{ invalid json }")
             }
@@ -76,6 +98,7 @@ class RoutesSpec : StringSpec({
     "POST /attachments/{messageId} returns Bad Request when messageId is invalid" {
         withTestApplication {
             val response = client.post("/attachments/invalid-uuid") {
+                bearerAuth(getToken().serialize())
                 contentType(ContentType.Application.Json)
                 setBody(Json.encodeToString(testAttachments))
             }
@@ -87,6 +110,7 @@ class RoutesSpec : StringSpec({
     "POST /attachments/{messageId} returns Not Found when messageId is missing" {
         withTestApplication {
             val response = client.post("/attachments/") {
+                bearerAuth(getToken().serialize())
                 contentType(ContentType.Application.Json)
                 setBody(Json.encodeToString(testAttachments))
             }
@@ -101,6 +125,7 @@ class RoutesSpec : StringSpec({
             repository.givenSaveThrowsException(true)
 
             val response = client.post("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
                 contentType(ContentType.Application.Json)
                 setBody(Json.encodeToString(testAttachments))
             }
@@ -109,12 +134,41 @@ class RoutesSpec : StringSpec({
         }
     }
 
+    "POST /attachments/{messageId} returns Unauthorized without Azure AD token" {
+        withTestApplication {
+            val messageId = Uuid.random()
+
+            val response = client.post("/attachments/$messageId") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(testAttachments))
+            }
+
+            response.status shouldBe Unauthorized
+        }
+    }
+
+    "POST /attachments/{messageId} returns Unauthorized with invalid Azure AD token" {
+        withTestApplication {
+            val messageId = Uuid.random()
+
+            val response = client.post("/attachments/$messageId") {
+                bearerAuth("invalid-token")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(testAttachments))
+            }
+
+            response.status shouldBe Unauthorized
+        }
+    }
+
     "GET /attachments/{messageId} returns list of attachments" {
         withTestApplication {
             val messageId = Uuid.random()
             repository.save(messageId, testAttachments)
 
-            val response = client.get("/attachments/$messageId")
+            val response = client.get("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
+            }
 
             response.status shouldBe OK
 
@@ -128,7 +182,9 @@ class RoutesSpec : StringSpec({
             val messageId = Uuid.random()
             repository.save(messageId, emptyList())
 
-            val response = client.get("/attachments/$messageId")
+            val response = client.get("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
+            }
 
             response.status shouldBe NotFound
         }
@@ -136,7 +192,9 @@ class RoutesSpec : StringSpec({
 
     "GET /attachments/{messageId} returns Bad Request when messageId is invalid" {
         withTestApplication {
-            val response = client.get("/attachments/invalid-uuid")
+            val response = client.get("/attachments/invalid-uuid") {
+                bearerAuth(getToken().serialize())
+            }
 
             response.status shouldBe BadRequest
         }
@@ -144,7 +202,9 @@ class RoutesSpec : StringSpec({
 
     "GET /attachments/{messageId} returns Not Found when messageId is missing" {
         withTestApplication {
-            val response = client.get("/attachments/")
+            val response = client.get("/attachments/") {
+                bearerAuth(getToken().serialize())
+            }
 
             response.status shouldBe NotFound
         }
@@ -155,9 +215,33 @@ class RoutesSpec : StringSpec({
             val messageId = Uuid.random()
             repository.givenReadThrowsException(true)
 
-            val response = client.get("/attachments/$messageId")
+            val response = client.get("/attachments/$messageId") {
+                bearerAuth(getToken().serialize())
+            }
 
             response.status shouldBe InternalServerError
+        }
+    }
+
+    "GET /attachments/{messageId} returns Unauthorized without Azure AD token" {
+        withTestApplication {
+            val messageId = Uuid.random()
+
+            val response = client.get("/attachments/$messageId")
+
+            response.status shouldBe Unauthorized
+        }
+    }
+
+    "GET /attachments/{messageId} returns Unauthorized with invalid Azure AD token" {
+        withTestApplication {
+            val messageId = Uuid.random()
+
+            val response = client.get("/attachments/$messageId") {
+                bearerAuth("invalid-token")
+            }
+
+            response.status shouldBe Unauthorized
         }
     }
 })

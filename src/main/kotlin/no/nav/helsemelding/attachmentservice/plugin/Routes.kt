@@ -3,6 +3,7 @@ package no.nav.helsemelding.attachmentservice.plugin
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -14,6 +15,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentmodel.model.Attachment
+import no.nav.helsemelding.attachmentservice.config
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
 import kotlin.uuid.Uuid
 
@@ -25,7 +27,10 @@ fun Application.configureRoutes(
 ) {
     routing {
         internalRoutes(registry)
-        externalRoutes(attachmentRepository)
+
+        authenticate(config().azureAuth.issuer) {
+            externalRoutes(attachmentRepository)
+        }
     }
 }
 

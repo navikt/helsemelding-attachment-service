@@ -10,6 +10,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.utils.io.CancellationException
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.awaitCancellation
+import no.nav.helsemelding.attachmentservice.plugin.configureAuthentication
 import no.nav.helsemelding.attachmentservice.plugin.configureMetrics
 import no.nav.helsemelding.attachmentservice.plugin.configureRoutes
 import no.nav.helsemelding.attachmentservice.plugin.installContentNegotiation
@@ -41,6 +42,7 @@ internal fun attachmentServiceModule(
 ): Application.() -> Unit {
     return {
         installContentNegotiation()
+        configureAuthentication()
         configureMetrics(meterRegistry)
         configureRoutes(meterRegistry, attachmentRepository)
     }

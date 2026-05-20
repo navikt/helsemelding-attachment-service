@@ -71,6 +71,7 @@ dependencies {
     testImplementation(testLibs.kotest.extensions.testcontainers)
     testImplementation(testLibs.ktor.server.test.host)
     testImplementation(testLibs.mockk)
+    testImplementation(testLibs.mock.oauth2.server)
     testImplementation(kotlin("test"))
 }
 
