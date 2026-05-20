@@ -27,17 +27,32 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
 
+    - name: "Build and tests attachment-model"
+      run: ./gradlew :attachment-model:test  :attachment-model:build
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: x-access-token
     - name: "Build and tests attachment-client"
       run: ./gradlew :attachment-client:test  :attachment-client:build
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: x-access-token
 
+    - name: "Show attachment-model version"
+      run: |
+        VERSION=$(grep 'version =' attachment-model/build.gradle.kts | awk -F'"' '{print $2}')
+        echo "Publishing attachment-model version: $VERSION"
     - name: "Show attachment-client version"
       run: |
         VERSION=$(grep 'version =' attachment-client/build.gradle.kts | awk -F'"' '{print $2}')
-        echo "Publishing attachment-client version: $VERSION"
+        echo "Publishing attachment-client version: $VERSION"   
 
+    - name: "Publish attachment-model to GitHub Packages"
+      run: ./gradlew --stacktrace :attachment-model:publish
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: x-access-token
     - name: "Publish attachment-client to GitHub Packages"
       run: ./gradlew --stacktrace :attachment-client:publish
       continue-on-error: true

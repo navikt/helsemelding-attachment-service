@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.3.21"
     kotlin("plugin.serialization") version "2.3.21"
     id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
+    id("maven-publish")
 }
 
 dependencies {
@@ -20,5 +21,26 @@ tasks {
     }
     build {
         dependsOn("ktlintCheck")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifactId = "attachment-model"
+            groupId = "no.nav.helsemelding"
+            version = "0.0.1-SNAPSHOT-2"
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri("https://maven.pkg.github.com/navikt/${rootProject.name}")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
