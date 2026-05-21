@@ -15,7 +15,7 @@ fun Application.configureAuthentication() {
             config = TokenSupportConfig(
                 IssuerConfig(
                     name = config().azureAuth.issuer,
-                    discoveryUrl = config().azureAuth.azureWellKnownUrl,
+                    discoveryUrl = config().azureAuth.discoveryUrl,
                     acceptedAudience = listOf(config().azureAuth.acceptedAudience)
                 )
             )

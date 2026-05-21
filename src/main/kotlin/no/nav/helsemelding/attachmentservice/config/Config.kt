@@ -22,6 +22,6 @@ data class Gcs(
 
 data class AzureAuth(
     val issuer: String,
-    val azureWellKnownUrl: String,
+    val discoveryUrl: String,
     val acceptedAudience: String
 )
