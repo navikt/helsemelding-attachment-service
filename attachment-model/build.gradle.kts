@@ -29,7 +29,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             artifactId = "attachment-model"
             groupId = "no.nav.helsemelding"
-            version = "0.0.1-SNAPSHOT-2"
+            version = "0.0.1"
             from(components["java"])
         }
     }
