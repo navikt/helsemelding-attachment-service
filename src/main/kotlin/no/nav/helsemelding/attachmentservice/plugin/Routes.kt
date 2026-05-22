@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -19,6 +18,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.config
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
+import no.nav.security.token.support.v3.TokenValidationContextPrincipal
 import kotlin.uuid.Uuid
 
 val log = KotlinLogging.logger {}
@@ -53,9 +53,21 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
 fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     post("/attachments/{messageId}") {
         // TODO: Debug logging, remove before merge
-        val principal = call.principal<JWTPrincipal>()
-        principal?.payload?.claims?.forEach { (name, claim) ->
-            log.debug { "Authentication claim: $name = ${claim.asString()}" }
+        val principal = call.principal<TokenValidationContextPrincipal>()
+
+        if (principal == null) {
+            log.warn { "No TokenValidationContextPrincipal found" }
+        } else {
+            val context = principal.context
+            val issuer = config().azureAuth.issuer
+            val claims = context.getClaims(issuer)
+
+            log.info { "Token issuer: $issuer" }
+            log.info { "azp: ${claims.getStringClaim("azp")}" }
+            log.info { "appid: ${claims.getStringClaim("appid")}" }
+            log.info { "client_id: ${claims.getStringClaim("client_id")}" }
+            log.info { "roles: ${claims.getAsList("roles")}" }
+            log.info { "scp: ${claims.getStringClaim("scp")}" }
         }
 
         val messageId = call.massageId() ?: return@post
