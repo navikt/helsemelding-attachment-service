@@ -76,7 +76,7 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
         try {
             attachmentRepository.save(messageId, attachments)
 
-            call.respond(HttpStatusCode.OK)
+            call.respond(HttpStatusCode.Created)
         } catch (e: Exception) {
             val errorMessage = "Error saving attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }

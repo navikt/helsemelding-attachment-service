@@ -19,7 +19,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
 dependencies {
     api(project(":attachment-model"))
 
-    implementation(libs.arrow.core)
     implementation(libs.arrow.functions)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)

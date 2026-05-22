@@ -9,6 +9,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.Created
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -77,7 +78,7 @@ class RoutesSpec : StringSpec({
                 setBody(Json.encodeToString(testAttachments))
             }
 
-            response.status shouldBe OK
+            response.status shouldBe Created
             repository.read(messageId) shouldBe testAttachments
         }
     }
