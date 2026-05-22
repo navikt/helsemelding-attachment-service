@@ -4,6 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -50,6 +52,12 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
 
 fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     post("/attachments/{messageId}") {
+        // TODO: Debug logging, remove before merge
+        val principal = call.principal<JWTPrincipal>()
+        principal?.payload?.claims?.forEach { (name, claim) ->
+            log.debug { "Authentication claim: $name = ${claim.asString()}" }
+        }
+
         val messageId = call.massageId() ?: return@post
         val attachments = call.attachments() ?: return@post
 

@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.kotlin.logging)
     implementation(libs.token.validation.ktor.v3)
     implementation(libs.google.cloud.storage)
+    implementation(libs.ktor.server.auth.jwt)
 
     testImplementation(testLibs.bundles.kotest)
     testImplementation(testLibs.kotest.assertions.arrow)
