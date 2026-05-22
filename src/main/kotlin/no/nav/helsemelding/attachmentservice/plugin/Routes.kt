@@ -3,6 +3,7 @@ package no.nav.helsemelding.attachmentservice.plugin
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
@@ -70,6 +71,8 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
             log.info { "scp: ${claims.getStringClaim("scp")}" }
         }
 
+        if (!call.requireWriteAccess()) return@post
+
         val messageId = call.massageId() ?: return@post
         val attachments = call.attachments() ?: return@post
 
@@ -123,4 +126,22 @@ private suspend fun RoutingCall.attachments(): List<Attachment>? = try {
     log.warn { errorMessage }
     this.respond(HttpStatusCode.BadRequest, errorMessage)
     null
+}
+
+private suspend fun ApplicationCall.requireWriteAccess(): Boolean {
+    val principal = principal<TokenValidationContextPrincipal>()
+
+    val claims = principal
+        ?.context
+        ?.getClaims("AZURE_AD")
+
+    val clientId = claims?.getStringClaim("azp")
+
+    if (clientId !in config().security.clientsWithWriteAccess) {
+        log.warn { "Client $clientId is not allowed to save attachments" }
+        respond(HttpStatusCode.Forbidden)
+        return false
+    }
+
+    return true
 }

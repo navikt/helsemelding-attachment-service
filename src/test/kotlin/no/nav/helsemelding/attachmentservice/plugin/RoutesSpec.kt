@@ -10,6 +10,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.Created
+import io.ktor.http.HttpStatusCode.Companion.Forbidden
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -25,7 +26,11 @@ import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.buildTestAttachments
 import no.nav.helsemelding.attachmentservice.repository.FakeAttachmentRepository
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import kotlin.uuid.Uuid
+
+private const val CLIENT_WITH_WRITE_ACCESS = "a284f235-78ac-4df9-8f1e-441783dbacca"
+private const val CLIENT_WITHOUT_WRITE_ACCESS = "11111111-2222-3333-4444-555555555555"
 
 class RoutesSpec : StringSpec({
     lateinit var repository: FakeAttachmentRepository
@@ -46,10 +51,12 @@ class RoutesSpec : StringSpec({
         repository = FakeAttachmentRepository()
     }
 
-    fun getToken() = mockOAuth2Server.issueToken(
+    fun getToken(clientId: String = CLIENT_WITH_WRITE_ACCESS) = mockOAuth2Server.issueToken(
         issuerId = "AZURE_AD",
-        audience = "api://dev-gcp.helsemelding.attachment-service",
-        subject = "test-user"
+        clientId = clientId,
+        tokenCallback = DefaultOAuth2TokenCallback(
+            audience = listOf("api://dev-gcp.helsemelding.attachment-service")
+        )
     )
 
     fun withTestApplication(
@@ -80,6 +87,20 @@ class RoutesSpec : StringSpec({
 
             response.status shouldBe Created
             repository.read(messageId) shouldBe testAttachments
+        }
+    }
+
+    "POST /attachments/{messageId} returns Forbidden when the client does not have write access" {
+        withTestApplication {
+            val messageId = Uuid.random()
+
+            val response = client.post("/attachments/$messageId") {
+                bearerAuth(getToken(CLIENT_WITHOUT_WRITE_ACCESS).serialize())
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(testAttachments))
+            }
+
+            response.status shouldBe Forbidden
         }
     }
 
@@ -169,6 +190,22 @@ class RoutesSpec : StringSpec({
 
             val response = client.get("/attachments/$messageId") {
                 bearerAuth(getToken().serialize())
+            }
+
+            response.status shouldBe OK
+
+            val attachmentsRetrieved = Json.decodeFromString<List<Attachment>>(response.bodyAsText())
+            attachmentsRetrieved shouldBe testAttachments
+        }
+    }
+
+    "GET /attachments/{messageId} returns list of attachments client does not have write access" {
+        withTestApplication {
+            val messageId = Uuid.random()
+            repository.save(messageId, testAttachments)
+
+            val response = client.get("/attachments/$messageId") {
+                bearerAuth(getToken(CLIENT_WITHOUT_WRITE_ACCESS).serialize())
             }
 
             response.status shouldBe OK
