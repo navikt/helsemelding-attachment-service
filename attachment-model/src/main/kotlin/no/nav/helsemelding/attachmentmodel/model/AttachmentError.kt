@@ -1,6 +1,6 @@
 package no.nav.helsemelding.attachmentmodel.model
 
-data class AttachmentError(
+class AttachmentError(
     val code: Int,
-    val message: String
-)
+    message: String
+) : RuntimeException(message)

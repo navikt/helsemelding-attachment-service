@@ -27,9 +27,9 @@ tasks {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            artifactId = "attachment-model"
             groupId = "no.nav.helsemelding"
-            version = "0.0.1"
+            artifactId = "attachment-model"
+            version = "0.0.1-SNAPSHOT-3"
             from(components["java"])
         }
     }

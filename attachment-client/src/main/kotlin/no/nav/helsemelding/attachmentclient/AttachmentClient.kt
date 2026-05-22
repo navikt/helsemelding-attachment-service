@@ -1,6 +1,5 @@
 package no.nav.helsemelding.attachmentclient
 
-import arrow.core.Either
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -24,9 +23,9 @@ interface AttachmentClient {
     suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): Either<AttachmentError, Unit>
+    ): Result<Unit>
 
-    suspend fun getAttachments(messageId: Uuid): Either<AttachmentError, List<Attachment>>
+    suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>>
 
     fun close()
 }
@@ -41,27 +40,27 @@ class HttpAttachmentClient(
     override suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): Either<AttachmentError, Unit> {
+    ): Result<Unit> {
         val response = httpClient.post("$attachmentServiceUrl/attachments/$messageId") {
             contentType(ContentType.Application.Json)
             setBody(attachments)
         }.withLogging()
 
         if (response.status != HttpStatusCode.OK) {
-            return Either.Left(response.toAttachmentError())
+            return Result.failure(response.toAttachmentError())
         }
 
-        return Either.Right(Unit)
+        return Result.success(Unit)
     }
 
-    override suspend fun getAttachments(messageId: Uuid): Either<AttachmentError, List<Attachment>> {
+    override suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>> {
         val response = httpClient.get("$attachmentServiceUrl/attachments/$messageId").withLogging()
 
         if (response.status != HttpStatusCode.OK) {
-            return Either.Left(response.toAttachmentError())
+            return Result.failure(response.toAttachmentError())
         }
 
-        return Either.Right(response.body())
+        return Result.success(response.body())
     }
 
     override fun close() {
