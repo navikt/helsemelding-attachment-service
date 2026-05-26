@@ -19,17 +19,47 @@ import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}
 
+/**
+ * Client interface for interacting with the Attachment Service.
+ */
 interface AttachmentClient {
+
+    /**
+     * Stores attachments for the given message ID.
+     *
+     * Note: In order to persist attachments, the caller must have write access to the Attachment Service.
+     *
+     * @param messageId Unique identifier for the message the attachments belong to.
+     * @param attachments List of attachments to persist.
+     *
+     * @return A successful [Result] if the attachments were stored successfully,
+     * otherwise a failed [Result] containing the underlying error.
+     */
     suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
     ): Result<Unit>
 
+
+    /**
+     * Retrieves all attachments associated with the given message ID.
+     *
+     * @param messageId Unique identifier for the message.
+     *
+     * @return A successful [Result] containing the list of attachments,
+     * otherwise a failed [Result] containing the underlying error.
+     */
     suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>>
 
     fun close()
 }
 
+/**
+ * HTTP-based implementation of [AttachmentClient].
+ *
+ * @property clientProvider Provider for creating the underlying HTTP client
+ * @property attachmentServiceUrl Base URL of the Attachment Service.
+ */
 class HttpAttachmentClient(
     clientProvider: () -> HttpClient = scopedAuthHttpClient(),
     private val attachmentServiceUrl: String = config().attachmentService.url.toString()
@@ -37,6 +67,11 @@ class HttpAttachmentClient(
 
     private val httpClient = clientProvider()
 
+    /**
+     * Sends attachments to the Attachment Service for storage.
+     *
+     * Note: In order to persist attachments, the caller must have write access to the Attachment Service.
+     */
     override suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
@@ -53,6 +88,9 @@ class HttpAttachmentClient(
         return Result.success(Unit)
     }
 
+    /**
+     * Fetches attachments associated with the provided message ID.
+     */
     override suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>> {
         val response = httpClient.get("$attachmentServiceUrl/attachments/$messageId").withLogging()
 
