@@ -3,6 +3,9 @@ package no.nav.helsemelding.attachmentservice.plugin
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -14,7 +17,9 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentmodel.model.Attachment
+import no.nav.helsemelding.attachmentservice.config
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
+import no.nav.security.token.support.v3.TokenValidationContextPrincipal
 import kotlin.uuid.Uuid
 
 val log = KotlinLogging.logger {}
@@ -25,7 +30,10 @@ fun Application.configureRoutes(
 ) {
     routing {
         internalRoutes(registry)
-        externalRoutes(attachmentRepository)
+
+        authenticate(config().azureAuth.issuer) {
+            externalRoutes(attachmentRepository)
+        }
     }
 }
 
@@ -45,13 +53,15 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
 
 fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     post("/attachments/{messageId}") {
+        if (!call.requireWriteAccess()) return@post
+
         val messageId = call.massageId() ?: return@post
         val attachments = call.attachments() ?: return@post
 
         try {
             attachmentRepository.save(messageId, attachments)
 
-            call.respond(HttpStatusCode.OK)
+            call.respond(HttpStatusCode.Created)
         } catch (e: Exception) {
             val errorMessage = "Error saving attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
@@ -98,4 +108,22 @@ private suspend fun RoutingCall.attachments(): List<Attachment>? = try {
     log.warn { errorMessage }
     this.respond(HttpStatusCode.BadRequest, errorMessage)
     null
+}
+
+private suspend fun ApplicationCall.requireWriteAccess(): Boolean {
+    val principal = principal<TokenValidationContextPrincipal>()
+
+    val claims = principal
+        ?.context
+        ?.getClaims("AZURE_AD")
+
+    val clientId = claims?.getStringClaim("azp")
+
+    if (clientId !in config().security.clientsWithWriteAccess) {
+        log.warn { "Client $clientId is not allowed to save attachments" }
+        respond(HttpStatusCode.Forbidden)
+        return false
+    }
+
+    return true
 }

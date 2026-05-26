@@ -54,6 +54,11 @@ spec:
       memory: "512Mi"
   ingresses:
     - "https://attachment-service.intern.dev.nav.no"
+  accessPolicy:
+    inbound:
+      rules:
+        - application: inbound-message-service
+          cluster: dev-gcp
   gcp:
     buckets:
       - name: helsemelding-attachments

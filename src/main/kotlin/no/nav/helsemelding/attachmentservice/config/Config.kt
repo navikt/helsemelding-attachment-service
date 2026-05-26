@@ -4,7 +4,9 @@ import kotlin.time.Duration
 
 data class Config(
     val server: Server,
-    val gcs: Gcs
+    val gcs: Gcs,
+    val azureAuth: AzureAuth,
+    val security: Security
 )
 
 data class Server(
@@ -17,4 +19,14 @@ value class Port(val value: Int)
 
 data class Gcs(
     val bucketName: String
+)
+
+data class AzureAuth(
+    val issuer: String,
+    val discoveryUrl: String,
+    val acceptedAudience: String
+)
+
+data class Security(
+    val clientsWithWriteAccess: Set<String>
 )

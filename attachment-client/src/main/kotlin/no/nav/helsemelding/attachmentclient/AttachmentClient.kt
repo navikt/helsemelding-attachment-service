@@ -1,6 +1,5 @@
 package no.nav.helsemelding.attachmentclient
 
-import arrow.core.Either
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -20,48 +19,85 @@ import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}
 
+/**
+ * Client interface for interacting with the Attachment Service.
+ */
 interface AttachmentClient {
+
+    /**
+     * Stores attachments for the given message ID.
+     *
+     * Note: In order to persist attachments, the caller must have write access to the Attachment Service.
+     *
+     * @param messageId Unique identifier for the message the attachments belong to.
+     * @param attachments List of attachments to persist.
+     *
+     * @return A successful [Result] if the attachments were stored successfully,
+     * otherwise a failed [Result] containing the underlying error.
+     */
     suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): Either<AttachmentError, Unit>
+    ): Result<Unit>
 
-    suspend fun getAttachments(messageId: Uuid): Either<AttachmentError, List<Attachment>>
+    /**
+     * Retrieves all attachments associated with the given message ID.
+     *
+     * @param messageId Unique identifier for the message.
+     *
+     * @return A successful [Result] containing the list of attachments,
+     * otherwise a failed [Result] containing the underlying error.
+     */
+    suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>>
 
     fun close()
 }
 
+/**
+ * HTTP-based implementation of [AttachmentClient].
+ *
+ * @property clientProvider Provider for creating the underlying HTTP client
+ * @property attachmentServiceUrl Base URL of the Attachment Service.
+ */
 class HttpAttachmentClient(
-    clientProvider: () -> HttpClient = httpClient(),
+    clientProvider: () -> HttpClient = scopedAuthHttpClient(),
     private val attachmentServiceUrl: String = config().attachmentService.url.toString()
 ) : AttachmentClient {
 
     private val httpClient = clientProvider()
 
+    /**
+     * Sends attachments to the Attachment Service for storage.
+     *
+     * Note: In order to persist attachments, the caller must have write access to the Attachment Service.
+     */
     override suspend fun saveAttachments(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): Either<AttachmentError, Unit> {
+    ): Result<Unit> {
         val response = httpClient.post("$attachmentServiceUrl/attachments/$messageId") {
             contentType(ContentType.Application.Json)
             setBody(attachments)
         }.withLogging()
 
         if (response.status != HttpStatusCode.OK) {
-            return Either.Left(response.toAttachmentError())
+            return Result.failure(response.toAttachmentError())
         }
 
-        return Either.Right(Unit)
+        return Result.success(Unit)
     }
 
-    override suspend fun getAttachments(messageId: Uuid): Either<AttachmentError, List<Attachment>> {
+    /**
+     * Fetches attachments associated with the provided message ID.
+     */
+    override suspend fun getAttachments(messageId: Uuid): Result<List<Attachment>> {
         val response = httpClient.get("$attachmentServiceUrl/attachments/$messageId").withLogging()
 
         if (response.status != HttpStatusCode.OK) {
-            return Either.Left(response.toAttachmentError())
+            return Result.failure(response.toAttachmentError())
         }
 
-        return Either.Right(response.body())
+        return Result.success(response.body())
     }
 
     override fun close() {

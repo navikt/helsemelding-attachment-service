@@ -19,7 +19,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
 dependencies {
     api(project(":attachment-model"))
 
-    implementation(libs.arrow.core)
     implementation(libs.arrow.functions)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
@@ -27,6 +26,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.auth)
     implementation(libs.kotlin.logging)
 
     testImplementation(testLibs.bundles.kotest)

@@ -7,6 +7,8 @@ The service exposes REST endpoints for storing and retrieving attachments:
 
 ### Store attachments
 
+**Important: In order for a third-party service to store attachments, must Azure AD `clientId` to the service be specified in the `clientsWithWriteAccess` configuration.**
+
 `POST /attachments/{messageId}`
 
 Accepts a list of attachments with metadata.
@@ -36,3 +38,15 @@ Returns `200 OK` if the attachments were stored successfully.
 Returns a list of attachments with metadata for the specified message ID.
 Returns `200 OK` with the attachments if found, or `404 Not Found` if no attachments exist for the given message ID.
 
+## Modules
+
+### attachment-client
+
+Kotlin client library for interacting with the Attachment API. 
+Provides methods to save and retrieve attachments.
+See: [attachment-client/README.md](attachment-client/README.md)
+
+### attachment-model
+
+Shared model definitions for attachments, used by both client and server.
+See: [attachment-model/README.md](attachment-model/README.md)

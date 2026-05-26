@@ -1,7 +1,5 @@
 package no.nav.helsemelding.attachmentclient
 
-import io.kotest.assertions.arrow.core.shouldBeLeft
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
@@ -21,12 +19,13 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentmodel.model.Attachment
+import no.nav.helsemelding.attachmentmodel.model.AttachmentError
 import kotlin.uuid.Uuid
 
 class HttpAttachmentClientSpec : StringSpec({
 
     val messageId = Uuid.random()
-    val attachments = listOf(
+    val testAttachments = listOf(
         Attachment(
             description = "attachment 1",
             contentType = "text/plain",
@@ -51,7 +50,9 @@ class HttpAttachmentClientSpec : StringSpec({
             )
         }
 
-        client.saveAttachments(messageId, attachments).shouldBeRight()
+        val response = client.saveAttachments(messageId, testAttachments)
+
+        response.isSuccess shouldBe true
     }
 
     "saveAttachments should return AttachmentError when Attachment Service returns error" {
@@ -62,8 +63,11 @@ class HttpAttachmentClientSpec : StringSpec({
             )
         }
 
-        val error = client.saveAttachments(messageId, attachments).shouldBeLeft()
+        val response = client.saveAttachments(messageId, testAttachments)
 
+        response.isFailure shouldBe true
+
+        val error = response.exceptionOrNull() as AttachmentError
         error.code shouldBe HttpStatusCode.InternalServerError.value
         error.message shouldBe "Unable to save attachments"
     }
@@ -74,15 +78,18 @@ class HttpAttachmentClientSpec : StringSpec({
             request.url.fullPath shouldBe "/attachments/$messageId"
 
             respond(
-                content = Json.encodeToString(attachments),
+                content = Json.encodeToString(testAttachments),
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             )
         }
 
-        val result = client.getAttachments(messageId).shouldBeRight()
+        val response = client.getAttachments(messageId)
 
-        result shouldBe attachments
+        response.isSuccess shouldBe true
+
+        val attachments = response.getOrNull()
+        attachments shouldBe testAttachments
     }
 
     "getAttachments should return AttachmentError when Attachment Service returns error" {
@@ -93,8 +100,11 @@ class HttpAttachmentClientSpec : StringSpec({
             )
         }
 
-        val error = client.getAttachments(messageId).shouldBeLeft()
+        val response = client.getAttachments(messageId)
 
+        response.isFailure shouldBe true
+
+        val error = response.exceptionOrNull() as AttachmentError
         error.code shouldBe HttpStatusCode.NotFound.value
         error.message shouldBe "Attachments not found"
     }
