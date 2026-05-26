@@ -40,7 +40,6 @@ interface AttachmentClient {
         attachments: List<Attachment>
     ): Result<Unit>
 
-
     /**
      * Retrieves all attachments associated with the given message ID.
      *
