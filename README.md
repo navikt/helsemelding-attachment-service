@@ -7,6 +7,8 @@ The service exposes REST endpoints for storing and retrieving attachments:
 
 ### Store attachments
 
+**Important: In order for a third-party service to store attachments, must Azure AD `clientId` to the service be specified in the `clientsWithWriteAccess` configuration.**
+
 `POST /attachments/{messageId}`
 
 Accepts a list of attachments with metadata.
