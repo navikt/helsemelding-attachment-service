@@ -29,7 +29,7 @@ import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import kotlin.uuid.Uuid
 
-private const val CLIENT_WITH_WRITE_ACCESS = "a284f235-78ac-4df9-8f1e-441783dbaccb"
+private const val CLIENT_WITH_WRITE_ACCESS = "a284f235-78ac-4df9-8f1e-441783dbacca"
 private const val CLIENT_WITHOUT_WRITE_ACCESS = "11111111-2222-3333-4444-555555555555"
 
 class RoutesSpec : StringSpec({
