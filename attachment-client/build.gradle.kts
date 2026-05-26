@@ -58,7 +58,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             groupId = "no.nav.helsemelding"
             artifactId = "attachment-client"
-            version = "0.0.1-SNAPSHOT-3"
+            version = "0.0.1"
             from(components["java"])
         }
     }

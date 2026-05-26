@@ -53,24 +53,6 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
 
 fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     post("/attachments/{messageId}") {
-        // TODO: Debug logging, remove before merge
-        val principal = call.principal<TokenValidationContextPrincipal>()
-
-        if (principal == null) {
-            log.warn { "No TokenValidationContextPrincipal found" }
-        } else {
-            val context = principal.context
-            val issuer = config().azureAuth.issuer
-            val claims = context.getClaims(issuer)
-
-            log.info { "Token issuer: $issuer" }
-            log.info { "azp: ${claims.getStringClaim("azp")}" }
-            log.info { "appid: ${claims.getStringClaim("appid")}" }
-            log.info { "client_id: ${claims.getStringClaim("client_id")}" }
-            log.info { "roles: ${claims.getAsList("roles")}" }
-            log.info { "scp: ${claims.getStringClaim("scp")}" }
-        }
-
         if (!call.requireWriteAccess()) return@post
 
         val messageId = call.massageId() ?: return@post
