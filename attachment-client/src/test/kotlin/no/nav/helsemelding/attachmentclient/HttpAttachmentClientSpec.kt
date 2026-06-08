@@ -46,7 +46,7 @@ class HttpAttachmentClientSpec : StringSpec({
 
             respond(
                 content = "",
-                status = HttpStatusCode.OK
+                status = HttpStatusCode.Created
             )
         }
 

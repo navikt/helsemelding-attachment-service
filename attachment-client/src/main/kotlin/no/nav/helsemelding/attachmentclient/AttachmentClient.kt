@@ -80,7 +80,7 @@ class HttpAttachmentClient(
             setBody(attachments)
         }.withLogging()
 
-        if (response.status != HttpStatusCode.OK) {
+        if (response.status != HttpStatusCode.Created) {
             return Result.failure(response.toAttachmentError())
         }
 
