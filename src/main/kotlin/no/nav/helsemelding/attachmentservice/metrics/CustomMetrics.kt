@@ -8,6 +8,7 @@ val log = KotlinLogging.logger {}
 
 interface Metrics {
     fun registerAttachmentSaving(result: AttachmentSavingResultTag)
+    fun registerAttachmentReading(result: AttachmentReadingResultTag)
 }
 
 class CustomMetrics(
@@ -21,10 +22,22 @@ class CustomMetrics(
             .register(registry)
             .increment()
     }
+
+    override fun registerAttachmentReading(result: AttachmentReadingResultTag) {
+        Counter.builder("helsemelding_attachments_reading")
+            .description("Number of attachment read requests")
+            .tag("result", result.value)
+            .register(registry)
+            .increment()
+    }
 }
 
 class FakeMetrics() : Metrics {
     override fun registerAttachmentSaving(result: AttachmentSavingResultTag) {
         log.info { "helsemelding_attachments_saving metric is registered with saving result: $result" }
+    }
+
+    override fun registerAttachmentReading(result: AttachmentReadingResultTag) {
+        log.info { "helsemelding_attachments_reading metric is registered with reading result: $result" }
     }
 }

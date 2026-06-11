@@ -18,6 +18,7 @@ import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.config
+import no.nav.helsemelding.attachmentservice.metrics.AttachmentReadingResultTag
 import no.nav.helsemelding.attachmentservice.metrics.AttachmentSavingResultTag
 import no.nav.helsemelding.attachmentservice.metrics.Metrics
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
@@ -91,17 +92,25 @@ fun Route.externalRoutes(
     }
 
     get("/attachments/{messageId}") {
-        val messageId = call.massageId() ?: return@get
+        val messageId = call.massageId()
+        if (messageId == null) {
+            metrics.registerAttachmentReading(AttachmentReadingResultTag.BAD_REQUEST)
+            return@get
+        }
 
         try {
             val attachments = attachmentRepository.read(messageId)
 
             if (attachments.isEmpty()) {
+                metrics.registerAttachmentReading(AttachmentReadingResultTag.NOT_FOUND)
                 call.respond(HttpStatusCode.NotFound)
             } else {
+                metrics.registerAttachmentReading(AttachmentReadingResultTag.SUCCESS)
                 call.respond(HttpStatusCode.OK, attachments)
             }
         } catch (e: Exception) {
+            metrics.registerAttachmentReading(AttachmentReadingResultTag.FAILED)
+
             val errorMessage = "Error reading attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
             call.respond(HttpStatusCode.InternalServerError, errorMessage)
