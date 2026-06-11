@@ -35,7 +35,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
 
         val result = repository.save(messageId, testAttachments)
 
-        result shouldBe messageId.toString()
+        result shouldBe content.size
     }
 
     "read should read attachments from GCS bucket" {

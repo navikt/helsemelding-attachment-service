@@ -78,9 +78,10 @@ fun Route.externalRoutes(
         }
 
         try {
-            attachmentRepository.save(messageId, attachments)
+            val attachmentsSize = attachmentRepository.save(messageId, attachments)
 
             metrics.registerAttachmentSaving(AttachmentSavingResultTag.SUCCESS)
+            metrics.registerAttachmentSize(attachmentsSize.toDouble())
             call.respond(HttpStatusCode.Created)
         } catch (e: Exception) {
             metrics.registerAttachmentSaving(AttachmentSavingResultTag.FAILED)

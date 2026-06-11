@@ -9,6 +9,7 @@ val log = KotlinLogging.logger {}
 interface Metrics {
     fun registerAttachmentSaving(result: AttachmentSavingResultTag)
     fun registerAttachmentReading(result: AttachmentReadingResultTag)
+    fun registerAttachmentSize(bytes: Double)
 }
 
 class CustomMetrics(
@@ -30,6 +31,13 @@ class CustomMetrics(
             .register(registry)
             .increment()
     }
+
+    override fun registerAttachmentSize(bytes: Double) {
+        Counter.builder("helsemelding_attachments_size_bytes")
+            .description("Total size of successfully saved attachments in bytes")
+            .register(registry)
+            .increment(bytes)
+    }
 }
 
 class FakeMetrics() : Metrics {
@@ -39,5 +47,9 @@ class FakeMetrics() : Metrics {
 
     override fun registerAttachmentReading(result: AttachmentReadingResultTag) {
         log.info { "helsemelding_attachments_reading metric is registered with reading result: $result" }
+    }
+
+    override fun registerAttachmentSize(bytes: Double) {
+        log.info { "helsemelding_attachments_size_bytes metric is registered with size in bytes: $bytes" }
     }
 }
