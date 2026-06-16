@@ -2,6 +2,7 @@ package no.nav.helsemelding.attachmentservice.metrics
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.DistributionSummary
 import io.micrometer.core.instrument.MeterRegistry
 
 val log = KotlinLogging.logger {}
@@ -33,10 +34,12 @@ class CustomMetrics(
     }
 
     override fun registerAttachmentSize(bytes: Double) {
-        Counter.builder("helsemelding_attachments_size_bytes")
-            .description("Total size of successfully saved attachments in bytes")
+        DistributionSummary.builder("helsemelding_attachment_size_bytes")
+            .description("Size of each successfully saved attachment in bytes")
+            .baseUnit("bytes")
+            .publishPercentileHistogram()
             .register(registry)
-            .increment(bytes)
+            .record(bytes)
     }
 }
 
@@ -50,6 +53,6 @@ class FakeMetrics() : Metrics {
     }
 
     override fun registerAttachmentSize(bytes: Double) {
-        log.info { "helsemelding_attachments_size_bytes metric is registered with size in bytes: $bytes" }
+        log.info { "helsemelding_attachment_size_bytes metric is registered with size in bytes: $bytes" }
     }
 }
