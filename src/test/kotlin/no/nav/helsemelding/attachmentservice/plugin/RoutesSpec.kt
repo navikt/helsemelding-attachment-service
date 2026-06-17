@@ -24,6 +24,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.buildTestAttachments
+import no.nav.helsemelding.attachmentservice.metrics.FakeMetrics
 import no.nav.helsemelding.attachmentservice.repository.FakeAttachmentRepository
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
@@ -68,7 +69,8 @@ class RoutesSpec : StringSpec({
                 configureAuthentication()
                 configureRoutes(
                     registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                    attachmentRepository = repository
+                    attachmentRepository = repository,
+                    FakeMetrics()
                 )
             }
             testBlock()

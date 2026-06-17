@@ -10,6 +10,8 @@ import io.ktor.server.netty.Netty
 import io.ktor.utils.io.CancellationException
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.awaitCancellation
+import no.nav.helsemelding.attachmentservice.metrics.CustomMetrics
+import no.nav.helsemelding.attachmentservice.metrics.Metrics
 import no.nav.helsemelding.attachmentservice.plugin.configureAuthentication
 import no.nav.helsemelding.attachmentservice.plugin.configureMetrics
 import no.nav.helsemelding.attachmentservice.plugin.configureRoutes
@@ -22,12 +24,17 @@ fun main() = SuspendApp {
     result {
         resourceScope {
             val deps = dependencies()
+            val metrics = CustomMetrics(deps.meterRegistry)
 
             server(
                 Netty,
                 port = config().server.port.value,
                 preWait = config().server.preWait,
-                module = attachmentServiceModule(deps.meterRegistry, deps.attachmentRepository)
+                module = attachmentServiceModule(
+                    deps.meterRegistry,
+                    deps.attachmentRepository,
+                    metrics
+                )
             )
 
             awaitCancellation()
@@ -38,13 +45,14 @@ fun main() = SuspendApp {
 
 internal fun attachmentServiceModule(
     meterRegistry: PrometheusMeterRegistry,
-    attachmentRepository: AttachmentRepository
+    attachmentRepository: AttachmentRepository,
+    metrics: Metrics
 ): Application.() -> Unit {
     return {
         installContentNegotiation()
         configureAuthentication()
         configureMetrics(meterRegistry)
-        configureRoutes(meterRegistry, attachmentRepository)
+        configureRoutes(meterRegistry, attachmentRepository, metrics)
     }
 }
 

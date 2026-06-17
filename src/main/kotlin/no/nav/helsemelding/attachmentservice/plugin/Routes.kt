@@ -18,6 +18,9 @@ import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.helsemelding.attachmentmodel.model.Attachment
 import no.nav.helsemelding.attachmentservice.config
+import no.nav.helsemelding.attachmentservice.metrics.AttachmentReadingResultTag
+import no.nav.helsemelding.attachmentservice.metrics.AttachmentSavingResultTag
+import no.nav.helsemelding.attachmentservice.metrics.Metrics
 import no.nav.helsemelding.attachmentservice.repository.AttachmentRepository
 import no.nav.security.token.support.v3.TokenValidationContextPrincipal
 import kotlin.uuid.Uuid
@@ -26,13 +29,14 @@ val log = KotlinLogging.logger {}
 
 fun Application.configureRoutes(
     registry: PrometheusMeterRegistry,
-    attachmentRepository: AttachmentRepository
+    attachmentRepository: AttachmentRepository,
+    metrics: Metrics
 ) {
     routing {
         internalRoutes(registry)
 
         authenticate(config().azureAuth.issuer) {
-            externalRoutes(attachmentRepository)
+            externalRoutes(attachmentRepository, metrics)
         }
     }
 }
@@ -51,18 +55,37 @@ fun Route.internalRoutes(registry: PrometheusMeterRegistry) {
     }
 }
 
-fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
+fun Route.externalRoutes(
+    attachmentRepository: AttachmentRepository,
+    metrics: Metrics
+) {
     post("/attachments/{messageId}") {
-        if (!call.requireWriteAccess()) return@post
+        if (!call.requireWriteAccess()) {
+            metrics.registerAttachmentSaving(AttachmentSavingResultTag.FORBIDDEN)
+            return@post
+        }
 
-        val messageId = call.massageId() ?: return@post
-        val attachments = call.attachments() ?: return@post
+        val messageId = call.massageId()
+        if (messageId == null) {
+            metrics.registerAttachmentSaving(AttachmentSavingResultTag.BAD_REQUEST)
+            return@post
+        }
+
+        val attachments = call.attachments()
+        if (attachments == null) {
+            metrics.registerAttachmentSaving(AttachmentSavingResultTag.BAD_REQUEST)
+            return@post
+        }
 
         try {
-            attachmentRepository.save(messageId, attachments)
+            val attachmentsSize = attachmentRepository.save(messageId, attachments)
 
+            metrics.registerAttachmentSaving(AttachmentSavingResultTag.SUCCESS)
+            metrics.registerAttachmentSize(attachmentsSize.toDouble())
             call.respond(HttpStatusCode.Created)
         } catch (e: Exception) {
+            metrics.registerAttachmentSaving(AttachmentSavingResultTag.FAILED)
+
             val errorMessage = "Error saving attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
             call.respond(HttpStatusCode.InternalServerError, errorMessage)
@@ -70,17 +93,25 @@ fun Route.externalRoutes(attachmentRepository: AttachmentRepository) {
     }
 
     get("/attachments/{messageId}") {
-        val messageId = call.massageId() ?: return@get
+        val messageId = call.massageId()
+        if (messageId == null) {
+            metrics.registerAttachmentReading(AttachmentReadingResultTag.BAD_REQUEST)
+            return@get
+        }
 
         try {
             val attachments = attachmentRepository.read(messageId)
 
             if (attachments.isEmpty()) {
+                metrics.registerAttachmentReading(AttachmentReadingResultTag.NOT_FOUND)
                 call.respond(HttpStatusCode.NotFound)
             } else {
+                metrics.registerAttachmentReading(AttachmentReadingResultTag.SUCCESS)
                 call.respond(HttpStatusCode.OK, attachments)
             }
         } catch (e: Exception) {
+            metrics.registerAttachmentReading(AttachmentReadingResultTag.FAILED)
+
             val errorMessage = "Error reading attachments for message $messageId: ${e.message}"
             log.error(e) { errorMessage }
             call.respond(HttpStatusCode.InternalServerError, errorMessage)

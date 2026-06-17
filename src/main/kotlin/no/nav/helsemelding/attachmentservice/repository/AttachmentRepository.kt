@@ -15,7 +15,7 @@ interface AttachmentRepository {
     fun save(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): String
+    ): Int
 
     fun read(
         messageId: Uuid
@@ -30,7 +30,7 @@ class GcsAttachmentRepository(
     override fun save(
         messageId: Uuid,
         attachments: List<Attachment>
-    ): String {
+    ): Int {
         log.info { "Saving attachment for message $messageId" }
 
         val content = Json.encodeToString(attachments).toByteArray()
@@ -42,7 +42,7 @@ class GcsAttachmentRepository(
         storage.create(blobInfo, content)
 
         log.info { "Attachment saved for message $messageId" }
-        return blobInfo.name
+        return content.size
     }
 
     override fun read(
@@ -76,13 +76,13 @@ class FakeAttachmentRepository() : AttachmentRepository {
         readTrowsException = throwException
     }
 
-    override fun save(messageId: Uuid, attachments: List<Attachment>): String {
+    override fun save(messageId: Uuid, attachments: List<Attachment>): Int {
         if (saveTrowsException) {
             throw RuntimeException("Error saving attachments for message $messageId")
         }
 
         this.attachments[messageId] = attachments
-        return messageId.toString()
+        return Json.encodeToString(attachments).toByteArray().size
     }
 
     override fun read(messageId: Uuid): List<Attachment> {
