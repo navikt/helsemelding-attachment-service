@@ -9,6 +9,10 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 }
 
+java {
+    withSourcesJar()
+}
+
 tasks {
     register<Wrapper>("wrapper") {
         gradleVersion = "8.1.1"
@@ -29,7 +33,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             groupId = "no.nav.helsemelding"
             artifactId = "attachment-model"
-            version = "0.0.1"
+            version = "0.0.2"
             from(components["java"])
         }
     }
