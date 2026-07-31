@@ -35,6 +35,10 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+java {
+    withSourcesJar()
+}
+
 tasks {
     test {
         useJUnitPlatform()
@@ -58,7 +62,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             groupId = "no.nav.helsemelding"
             artifactId = "attachment-client"
-            version = "0.0.2"
+            version = "0.0.3"
             from(components["java"])
         }
     }
