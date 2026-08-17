@@ -62,8 +62,8 @@ spec:
   gcp:
     buckets:
       - name: helsemelding-attachments
-        retentionPeriodDays: 1
+        retentionPeriodDays: 90
         lifecycleCondition:
-          age: 30
+          age: 90
           withState: ANY
   env:
