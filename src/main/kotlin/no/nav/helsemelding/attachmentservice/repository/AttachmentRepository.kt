@@ -33,6 +33,12 @@ class GcsAttachmentRepository(
     ): Int {
         log.info { "Saving attachment for message $messageId" }
 
+        val existingBlob = storage.get(bucketName, messageId.toString())
+        if (existingBlob != null) {
+            log.info { "Attachments already exist for message $messageId, skipping save" }
+            return existingBlob.getContent().size
+        }
+
         val content = Json.encodeToString(attachments).toByteArray()
 
         val blobInfo = BlobInfo.newBuilder(

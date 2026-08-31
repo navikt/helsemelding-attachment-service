@@ -24,18 +24,28 @@ class GcsAttachmentRepositorySpec : StringSpec({
         bucketName = bucketName
     )
 
-    "save should store attachments in GCS bucket" {
+    "save should store attachments in GCS bucket when they do not exist" {
         val blob = mockk<Blob>()
-
         val content = Json.encodeToString(testAttachments).toByteArray()
 
-        every {
-            storage.create(any<BlobInfo>(), content)
-        } returns blob
+        every { storage.get(bucketName, messageId.toString()) } returns null
+        every { storage.create(any<BlobInfo>(), content) } returns blob
 
         val result = repository.save(messageId, testAttachments)
 
         result shouldBe content.size
+    }
+
+    "save should skip storing and return existing size when attachments already exist" {
+        val existingBlob = mockk<Blob>()
+        val existingContent = Json.encodeToString(testAttachments).toByteArray()
+
+        every { storage.get(bucketName, messageId.toString()) } returns existingBlob
+        every { existingBlob.getContent() } returns existingContent
+
+        val result = repository.save(messageId, testAttachments)
+
+        result shouldBe existingContent.size
     }
 
     "read should read attachments from GCS bucket" {
