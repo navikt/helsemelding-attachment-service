@@ -36,7 +36,7 @@ class GcsAttachmentRepositorySpec : StringSpec({
         result shouldBe content.size
     }
 
-    "save should skip storing and return existing size when create fails and attachments already exist" {
+    "save should skip storing attachment when it already exist" {
         val existingBlob = mockk<Blob>()
         val existingContent = Json.encodeToString(testAttachments).toByteArray()
 
