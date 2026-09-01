@@ -3,6 +3,7 @@ package no.nav.helsemelding.attachmentservice.repository
 import com.google.cloud.storage.Blob
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -28,7 +29,6 @@ class GcsAttachmentRepositorySpec : StringSpec({
         val blob = mockk<Blob>()
         val content = Json.encodeToString(testAttachments).toByteArray()
 
-        every { storage.get(bucketName, messageId.toString()) } returns null
         every { storage.create(any<BlobInfo>(), content) } returns blob
 
         val result = repository.save(messageId, testAttachments)
@@ -36,16 +36,26 @@ class GcsAttachmentRepositorySpec : StringSpec({
         result shouldBe content.size
     }
 
-    "save should skip storing and return existing size when attachments already exist" {
+    "save should skip storing and return existing size when create fails and attachments already exist" {
         val existingBlob = mockk<Blob>()
         val existingContent = Json.encodeToString(testAttachments).toByteArray()
 
+        every { storage.create(any<BlobInfo>(), any<ByteArray>()) } throws RuntimeException("retention policy")
         every { storage.get(bucketName, messageId.toString()) } returns existingBlob
         every { existingBlob.getContent() } returns existingContent
 
         val result = repository.save(messageId, testAttachments)
 
         result shouldBe existingContent.size
+    }
+
+    "save should rethrow exception when create fails and attachments do not exist" {
+        every { storage.create(any<BlobInfo>(), any<ByteArray>()) } throws RuntimeException("network error")
+        every { storage.get(bucketName, messageId.toString()) } returns null
+
+        shouldThrow<RuntimeException> {
+            repository.save(messageId, testAttachments)
+        }
     }
 
     "read should read attachments from GCS bucket" {

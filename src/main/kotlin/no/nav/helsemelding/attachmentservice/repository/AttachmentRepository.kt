@@ -33,33 +33,32 @@ class GcsAttachmentRepository(
     ): Int {
         log.info { "Saving attachment for message $messageId" }
 
-        val existingBlob = storage.get(bucketName, messageId.toString())
-        if (existingBlob != null) {
-            log.info { "Attachments already exist for message $messageId, skipping save" }
-            return existingBlob.getContent().size
-        }
-
         val content = Json.encodeToString(attachments).toByteArray()
+        val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, messageId.toString())).build()
 
-        val blobInfo = BlobInfo.newBuilder(
-            BlobId.of(bucketName, messageId.toString())
-        ).build()
-
-        storage.create(blobInfo, content)
-
-        log.info { "Attachment saved for message $messageId" }
-        return content.size
+        try {
+            storage.create(blobInfo, content)
+            log.info { "Attachment saved for message $messageId" }
+            return content.size
+        } catch (e: Exception) {
+            val existingBlob = storage.get(bucketName, messageId.toString())
+            if (existingBlob != null) {
+                log.info { "Attachment already exist for message $messageId, skipping save" }
+                return existingBlob.getContent().size
+            }
+            throw e
+        }
     }
 
     override fun read(
         messageId: Uuid
     ): List<Attachment> {
-        log.info { "Reading attachments for message $messageId" }
+        log.info { "Reading attachment for message $messageId" }
 
         val blob = storage.get(bucketName, messageId.toString())
 
         if (blob == null) {
-            log.warn { "Attachments not found $messageId" }
+            log.warn { "Attachment not found $messageId" }
             return emptyList()
         }
 
@@ -84,7 +83,7 @@ class FakeAttachmentRepository() : AttachmentRepository {
 
     override fun save(messageId: Uuid, attachments: List<Attachment>): Int {
         if (saveTrowsException) {
-            throw RuntimeException("Error saving attachments for message $messageId")
+            throw RuntimeException("Error saving attachment for message $messageId")
         }
 
         this.attachments[messageId] = attachments
@@ -93,7 +92,7 @@ class FakeAttachmentRepository() : AttachmentRepository {
 
     override fun read(messageId: Uuid): List<Attachment> {
         if (readTrowsException) {
-            throw RuntimeException("Error reading attachments for message $messageId")
+            throw RuntimeException("Error reading attachment for message $messageId")
         }
 
         return attachments[messageId].orEmpty()
