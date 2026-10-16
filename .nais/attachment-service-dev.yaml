@@ -59,6 +59,9 @@ spec:
       rules:
         - application: inbound-message-service
           cluster: dev-gcp
+        - application: padm2
+          namespace: teamsykefravr
+          cluster: dev-gcp
   gcp:
     buckets:
       - name: helsemelding-attachments
