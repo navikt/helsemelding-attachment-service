@@ -69,4 +69,3 @@ spec:
         lifecycleCondition:
           age: 90
           withState: ANY
-  env:
